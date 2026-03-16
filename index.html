@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>闪光功率计算器</title>
+    <style>
+        :root {
+            --bg-color: #000000;
+            --card-bg: #1C1C1E;
+            --text-main: #FFFFFF;
+            --text-muted: #8E8E93;
+            --accent-color: #FF9F0A; /* 改为了更醒目的橙色 */
+            --border-color: #38383A;
+            --danger-color: #FF453A;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 400px;
+            margin-top: 30px;
+        }
+
+        h1 {
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+
+        .input-group {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .label-container {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .sub-label {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        input[type="number"] {
+            background-color: transparent;
+            border: none;
+            color: var(--text-main);
+            font-size: 20px;
+            font-weight: 600;
+            text-align: right;
+            width: 100px;
+            outline: none;
+        }
+        
+        input[type="number"]::placeholder {
+            color: #444;
+        }
+
+        .result-card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 24px 16px;
+            margin-top: 24px;
+            text-align: center;
+            border: 1px solid var(--border-color);
+        }
+
+        .result-title {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .result-value {
+            font-size: 56px;
+            font-weight: 700;
+            color: var(--accent-color);
+            margin-bottom: 12px;
+        }
+
+        .result-sub {
+            font-size: 13px;
+            color: var(--text-muted);
+            border-top: 1px solid var(--border-color);
+            padding-top: 12px;
+        }
+
+        .danger {
+            color: var(--danger-color) !important;
+            font-size: 32px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>闪光功率计算器</h1>
+
+        <div class="input-group">
+            <div class="label-container">
+                <label for="max-gn">闪光灯标称指数</label>
+                <span class="sub-label">Max GN (ISO 100)</span>
+            </div>
+            <input type="number" id="max-gn" step="1" placeholder="例如: 60" inputmode="numeric">
+        </div>
+
+        <div class="input-group">
+            <div class="label-container">
+                <label for="aperture">光圈值</label>
+                <span class="sub-label">Aperture (f/)</span>
+            </div>
+            <input type="number" id="aperture" step="0.1" placeholder="例如: 8" inputmode="decimal">
+        </div>
+
+        <div class="input-group">
+            <div class="label-container">
+                <label for="distance">拍摄距离</label>
+                <span class="sub-label">Distance (m)</span>
+            </div>
+            <input type="number" id="distance" step="0.1" placeholder="例如: 5" inputmode="decimal">
+        </div>
+
+        <div class="input-group">
+            <div class="label-container">
+                <label for="iso">胶卷感光度</label>
+                <span class="sub-label">Film ISO</span>
+            </div>
+            <input type="number" id="iso" step="1" value="100" inputmode="numeric">
+        </div>
+
+        <div class="result-card">
+            <div class="result-title">闪光灯功率设置 (Flash Power)</div>
+            <div class="result-value" id="power-output">--</div>
+            
+            <div class="result-sub" id="power-sub">
+                请输入上方完整参数
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const maxGnInput = document.getElementById('max-gn');
+        const apertureInput = document.getElementById('aperture');
+        const distanceInput = document.getElementById('distance');
+        const isoInput = document.getElementById('iso');
+        
+        const powerOutput = document.getElementById('power-output');
+        const powerSub = document.getElementById('power-sub');
+
+        function calculatePower() {
+            const maxGN = parseFloat(maxGnInput.value);
+            const aperture = parseFloat(apertureInput.value);
+            const distance = parseFloat(distanceInput.value);
+            const iso = parseFloat(isoInput.value);
+
+            if (maxGN && aperture && distance && iso) {
+                // 1. 本次曝光需要的 GN 值
+                const requiredGN = aperture * distance;
+                
+                // 2. 修正 ISO 后的实际最大 GN 值
+                const effectiveMaxGN = maxGN * Math.sqrt(iso / 100);
+
+                // 3. 计算功率占比： (需求GN / 极限GN) 的平方
+                const powerRatio = Math.pow(requiredGN / effectiveMaxGN, 2);
+
+                if (powerRatio > 1) {
+                    // 超出闪光灯最大功率
+                    powerOutput.className = 'result-value danger';
+                    powerOutput.textContent = '功率不足';
+                    powerSub.textContent = `需要 GN: ${requiredGN.toFixed(1)} | 当前灯极限 GN: ${effectiveMaxGN.toFixed(1)}`;
+                } else {
+                    powerOutput.className = 'result-value';
+                    
+                    // 将小数转换为 1/X 的分母
+                    const denominator = 1 / powerRatio;
+                    
+                    // 寻找最接近的标准闪光灯档位 (1, 2, 4, 8, 16, 32, 64, 128)
+                    const standardDenominator = Math.pow(2, Math.round(Math.log2(denominator)));
+                    
+                    if (standardDenominator === 1) {
+                        powerOutput.textContent = '1/1';
+                    } else {
+                        powerOutput.textContent = '1/' + standardDenominator;
+                    }
+
+                    // 底部提供精确值参考，方便手动微调
+                    const exactFraction = powerRatio === 1 ? '1/1' : '1/' + denominator.toFixed(1);
+                    powerSub.textContent = `精确理论值: ${exactFraction} (需 GN: ${requiredGN.toFixed(1)})`;
+                }
+            } else {
+                powerOutput.className = 'result-value';
+                powerOutput.textContent = '--';
+                powerSub.textContent = '等待输入完整参数...';
+            }
+        }
+
+        maxGnInput.addEventListener('input', calculatePower);
+        apertureInput.addEventListener('input', calculatePower);
+        distanceInput.addEventListener('input', calculatePower);
+        isoInput.addEventListener('input', calculatePower);
+    </script>
+</body>
+</html>
