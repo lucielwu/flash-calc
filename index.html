@@ -6,6 +6,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>闪光功率计算器</title>
+    <link rel="manifest" href="./manifest.json">
     <style>
         :root {
             --bg-color: #000000;
@@ -226,6 +227,18 @@
         apertureInput.addEventListener('input', calculatePower);
         distanceInput.addEventListener('input', calculatePower);
         isoInput.addEventListener('input', calculatePower);
+        // --- 离线缓存注册代码 ---
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(registration => {
+                        console.log('离线功能已激活', registration.scope);
+                    })
+                    .catch(err => {
+                        console.log('离线功能激活失败', err);
+                    });
+            });
+        }
     </script>
 </body>
 </html>
