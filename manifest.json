@@ -1,0 +1,8 @@
+{
+  "name": "闪光功率计算器",
+  "short_name": "闪光计算",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#000000"
+}
